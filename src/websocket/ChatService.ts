@@ -1,7 +1,10 @@
 import { container } from "tsyringe";
 import { io } from "../http";
+import { CreateChatRoomService } from "../services/CreateChatRoomService";
 import { CreateUserService } from "../services/CreateUserService";
 import { GetAllUsersService } from "../services/GetAllUsersService";
+import { GetChatRoomByUsersService } from "../services/GetChatRoomByUsersService";
+import { GetUserBySocketIdService } from "../services/GetUserBySocketIdService";
 
 io.on("connect", socket => {
   socket.on("start", async data => {
@@ -23,5 +26,21 @@ io.on("connect", socket => {
     const users = await getAllUsersService.execute()
 
     callback(users)
+  })
+
+  socket.on("start_chat", async (data, callback) => {
+    const createChatRoomService = container.resolve(CreateChatRoomService)
+    const getUserBySocketIdService = container.resolve(GetUserBySocketIdService)
+    const getChatRoomByUsersService = container.resolve(GetChatRoomByUsersService)
+
+    const loggedUser = await getUserBySocketIdService.execute(socket.id)
+
+    let room = await getChatRoomByUsersService.execute([data.idUser, loggedUser._id])
+
+    if(!room) {
+      room = await createChatRoomService.execute([data.idUser, loggedUser._id])
+    }
+
+    callback({ room })
   })
 })

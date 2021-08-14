@@ -13,7 +13,6 @@ function onLoad() {
       src=${avatar}
     />
     <strong id="user_logged">${name}</strong>
-  
   `;
 
   socket.emit("start", {
